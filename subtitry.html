@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Субтитры">
+<meta name="theme-color" content="#5e0f22">
+<title>Ягода · Субтитры</title>
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%235e0f22'/%3E%3Crect x='30' y='112' width='120' height='22' rx='6' fill='%23fff'/%3E%3Crect x='50' y='142' width='80' height='14' rx='5' fill='%23f2c6cf'/%3E%3Ctext x='90' y='88' font-family='Arial' font-weight='700' font-size='64' fill='%23fff' text-anchor='middle'%3EАа%3C/text%3E%3C/svg%3E">
+<style>
+/*
+VOICE: спокойный рабочий инструмент бутика, без лишнего
+IDEA: монтажный лист — строки с таймкодами, как дорожка субтитров
+PICTURE: сама дорожка строк с плашкой текущей строки
+COLOUR and TYPE: фирменный бордовый, белый, тёплый серый; системный шрифт
+LAYOUT: одна колонка под телефон, шаги сверху вниз, вкладки снизу
+*/
+:root{color-scheme:light dark;
+--bg:light-dark(#f6f2f0,#141012);--card:light-dark(#fff,#1f191b);--ink:light-dark(#1d1416,#f3ecee);
+--mute:light-dark(#7a6b6f,#a99a9e);--line:light-dark(#e8dfe1,#33292c);--brand:#6e1328;--brand2:light-dark(#f6e3e7,#3a1820);
+--ok:#2f7d4f;--warn:#b5641b}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;overflow-x:clip;
+padding:env(safe-area-inset-top) 0 calc(78px + env(safe-area-inset-bottom))}
+header{background:var(--brand);color:#fff;padding:18px 18px 16px}
+header h1{margin:0;font-size:22px;line-height:1.1}
+header p{margin:4px 0 0;opacity:.8;font-size:14px}
+main{max-width:720px;margin:0 auto;padding:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px}
+.card h2{margin:0 0 10px;font-size:18px}
+.mute{color:var(--mute);font-size:14px}
+button,.btn{font:inherit;font-weight:600;border:0;border-radius:12px;min-height:48px;padding:0 16px;cursor:pointer;
+background:var(--brand);color:#fff;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+button.sec{background:var(--brand2);color:var(--ink)}
+button.ghost{background:transparent;color:var(--brand);min-height:40px;padding:0 8px}
+button:disabled{opacity:.45}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #d88;outline-offset:2px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.row>button{flex:1 1 140px}
+input,textarea,select{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+label{display:block;font-size:14px;color:var(--mute);margin:10px 0 4px}
+.seg{display:flex;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px}
+.seg button{flex:1;min-height:40px;background:transparent;color:var(--ink);font-weight:500;border-radius:9px;padding:0 6px;font-size:15px}
+.seg button.on{background:var(--brand);color:#fff}
+.drop{border:2px dashed var(--line);border-radius:16px;padding:22px 14px;text-align:center}
+.drop b{display:block;font-size:17px;margin-bottom:4px}
+.prog{height:8px;background:var(--line);border-radius:6px;overflow:hidden;margin-top:12px}
+.prog i{display:block;height:100%;width:0;background:var(--brand);transition:width .4s}
+.status{margin-top:8px;font-size:15px}
+.err{background:light-dark(#fdecec,#3a1515);border:1px solid light-dark(#f2b8b8,#6a2a2a);color:light-dark(#8a1c1c,#ffb4b4);padding:12px;border-radius:12px;font-size:14px;white-space:pre-wrap;word-break:break-word;margin-top:10px}
+.lines{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.ln{display:grid;grid-template-columns:62px 1fr;gap:8px;align-items:start;padding:8px;border-radius:12px;border:1px solid var(--line);background:var(--bg)}
+.ln.cur{border-color:var(--brand);background:var(--brand2)}
+.ln .t{font:600 13px/1.2 ui-monospace,Menlo,monospace;color:var(--brand);background:var(--card);border:1px solid var(--line);border-radius:8px;min-height:40px;padding:0 4px}
+.ln textarea{min-height:40px;padding:8px 10px;resize:none;text-transform:var(--tt,none);field-sizing:content}
+.ln.ch textarea{border-color:var(--warn)}
+audio{width:100%;margin-top:8px}
+.dict{display:grid;grid-template-columns:1fr 1fr 44px;gap:6px;align-items:center;margin-top:6px}
+.dict button{min-height:44px;padding:0}
+.chip{display:flex;gap:8px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:10px;margin-top:6px;font-size:15px}
+.chip input{width:22px;height:22px}
+nav{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;padding:6px 6px calc(6px + env(safe-area-inset-bottom));z-index:5}
+nav button{flex:1;background:transparent;color:var(--mute);flex-direction:column;gap:2px;min-height:54px;font-size:12px;font-weight:600;padding:0}
+nav button span{font-size:20px;line-height:1}
+nav button.on{color:var(--brand)}
+.hidden{display:none!important}
+ol.help{padding-left:22px;margin:6px 0}ol.help li{margin:6px 0}
+.tag{display:inline-block;background:var(--brand2);border-radius:6px;padding:0 6px;font-weight:600}
+.sw{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.sw:last-child{border-bottom:0}
+.sw input[type=checkbox]{width:26px;height:26px;flex:none}
+.sw input[type=number]{width:90px}
+@media (prefers-reduced-motion:reduce){.prog i{transition:none}}
+</style>
+</head>
+<body>
+<header><h1>Ягода · Субтитры</h1><p>Звук ролика → проверка текста → файл для CapCut</p></header>
+<main>
+
+<!-- ===== ВКЛАДКА: СУБТИТРЫ ===== -->
+<section id="tab-work">
+  <div class="card" id="needKey">
+    <h2>Сначала один раз</h2>
+    <p class="mute">Нужен бесплатный ключ Gemini. Как его получить — во вкладке «Помощь». Затем вставьте его во вкладке «Настройки».</p>
+    <button class="sec" data-go="set">Открыть настройки</button>
+  </div>
+
+  <div class="card" id="step1">
+    <h2>1. Звук ролика</h2>
+    <label class="drop" for="file">
+      <b>Выбрать файл</b>
+      <span class="mute">Аудио M4A из «Быстрой команды» или само видео — подойдёт и то и другое</span>
+    </label>
+    <input id="file" type="file" accept="audio/*,video/*,.m4a,.mp3,.wav,.aac,.mp4,.mov" class="hidden">
+    <div id="fileInfo" class="status mute"></div>
+    <button id="go" class="hidden" style="width:100%;margin-top:12px">Сделать субтитры</button>
+    <div class="prog hidden" id="prog"><i></i></div>
+    <div id="status" class="status"></div>
+    <div id="err" class="err hidden"></div>
+  </div>
+
+  <div class="card hidden" id="step2">
+    <h2>2. Проверка текста</h2>
+    <div class="seg" id="langTabs">
+      <button data-l="ru" class="on">Русский</button><button data-l="kz">Казахский</button>
+    </div>
+    <audio id="player" controls playsinline></audio>
+    <p class="mute" style="margin:6px 0 0">Нажмите на время — ролик заиграет с этого места. Исправляйте текст прямо в строках.</p>
+    <div class="lines" id="lines"></div>
+  </div>
+
+  <div class="card hidden" id="step3">
+    <h2>3. Файлы для CapCut</h2>
+    <label>Какие субтитры нужны</label>
+    <div class="seg" id="outMode">
+      <button data-m="ru" class="on">Русский</button><button data-m="kz">Казахский</button><button data-m="both">Оба</button>
+    </div>
+    <div id="learn" class="hidden" style="margin-top:12px">
+      <b>Запомнить исправления?</b>
+      <div class="mute">В следующий раз эти слова будут сразу правильными.</div>
+      <div id="learnList"></div>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <button id="save">Сохранить файл .lrc</button>
+    </div>
+    <p class="mute" id="saveHint">Откроется меню «Поделиться» → «Сохранить в Файлы». Затем в CapCut: «Текст» → «Импорт субтитров».</p>
+    <button class="ghost" id="restart">Начать новый ролик</button>
+  </div>
+</section>
+
+<!-- ===== ВКЛАДКА: СЛОВАРЬ ===== -->
+<section id="tab-dict" class="hidden">
+  <div class="card">
+    <h2>Словарь</h2>
+    <p class="mute">Слева — как распознаётся или как звучит, справа — как писать. Словарь подсказывается ИИ и применяется ко всем роликам.</p>
+    <div id="dictRows"></div>
+    <div class="row" style="margin-top:10px"><button class="sec" id="dictAdd">+ Добавить слово</button></div>
+  </div>
+  <div class="card">
+    <h2>Копия словаря</h2>
+    <p class="mute">Словарь хранится на этом телефоне. Сохраните копию, чтобы перенести на другой телефон.</p>
+    <textarea id="dictText" rows="5" placeholder="кэжуал = casual"></textarea>
+    <div class="row" style="margin-top:8px"><button class="sec" id="dictCopy">Копировать</button><button class="sec" id="dictLoad">Загрузить из поля</button></div>
+  </div>
+</section>
+
+<!-- ===== ВКЛАДКА: НАСТРОЙКИ ===== -->
+<section id="tab-set" class="hidden">
+  <div class="card">
+    <h2>Ключ Gemini</h2>
+    <input id="key" type="password" autocomplete="off" placeholder="AIza…">
+    <div class="row" style="margin-top:10px"><button id="keySave">Сохранить</button><button class="sec" id="keyTest">Проверить</button></div>
+    <div id="keyRes" class="status"></div>
+  </div>
+  <div class="card">
+    <h2>Вид субтитров</h2>
+    <div class="sw"><span>ЗАГЛАВНЫМИ БУКВАМИ</span><input type="checkbox" id="optUpper" checked></div>
+    <div class="sw"><span>Без точек и запятых</span><input type="checkbox" id="optNoPunct" checked></div>
+    <div class="sw"><span>Букв в строке, не больше</span><input type="number" id="optMax" min="15" max="60" value="30"></div>
+    <div class="sw"><span>Пауза, после которой текст убирается (сек)</span><input type="number" id="optGap" min="0.2" max="3" step="0.1" value="0.4"></div>
+  </div>
+  <div class="card">
+    <h2>Модели</h2>
+    <label for="mAsr">Распознавание</label>
+    <input id="mAsr" value="gemini-3.5-transcribe">
+    <label for="mLlm">Правка и перевод (пусто — выбрать автоматически)</label>
+    <input id="mLlm" placeholder="автоматически">
+    <p class="mute">Менять, только если что-то перестало работать.</p>
+  </div>
+</section>
+
+<!-- ===== ВКЛАДКА: ПОМОЩЬ ===== -->
+<section id="tab-help" class="hidden">
+  <div class="card">
+    <h2>Как достать звук из ролика</h2>
+    <p class="mute">Один раз создайте команду в приложении «Быстрые команды» (оно уже есть на iPhone):</p>
+    <ol class="help">
+      <li>«Быстрые команды» → <span class="tag">+</span> → назовите «Звук из видео».</li>
+      <li>Добавить действие <span class="tag">Кодировать медиа</span>, нажать на стрелку, включить <span class="tag">Только аудио</span>, формат M4A.</li>
+      <li>Добавить действие <span class="tag">Сохранить файл</span>.</li>
+      <li>Нажать на <span class="tag">ⓘ</span> внизу и включить <span class="tag">Показывать в меню «Поделиться»</span>. Тип входа — «Медиа».</li>
+    </ol>
+    <p class="mute">Дальше: экспорт ролика из CapCut (любое качество) → в «Фото» открыть ролик → «Поделиться» → «Звук из видео» → выбрать папку. Можно и не делать: приложение примет и само видео, отделит звук и отправит в Gemini только его.</p>
+  </div>
+  <div class="card">
+    <h2>Как получить ключ Gemini (бесплатно)</h2>
+    <ol class="help">
+      <li>Откройте <a href="https://aistudio.google.com/apikey">aistudio.google.com/apikey</a> и войдите своим аккаунтом Google.</li>
+      <li>Согласитесь с условиями, если спросит.</li>
+      <li>Нажмите <span class="tag">Create API key</span> (создать ключ).</li>
+      <li>Скопируйте ключ — он начинается с <b>AIza</b> — и вставьте во вкладке «Настройки».</li>
+    </ol>
+    <p class="mute">Ключ хранится только на этом телефоне. Бесплатного лимита хватает на десятки роликов в день.</p>
+  </div>
+  <div class="card">
+    <h2>Как загрузить в CapCut</h2>
+    <ol class="help">
+      <li>Откройте проект с готовым монтажом, ползунок — в начало.</li>
+      <li><span class="tag">Текст</span> → <span class="tag">Импорт субтитров</span> → выберите файл .lrc.</li>
+      <li>Для двух языков импортируйте оба файла: KZ и RU. Каждый станет своей дорожкой — покрасьте и расположите отдельно.</li>
+      <li>Выберите шрифт и стиль, отметьте «Применить ко всем основным субтитрам».</li>
+    </ol>
+    <p class="mute">Важно: после того как отделили звук, монтаж не меняйте — иначе субтитры сдвинутся.</p>
+  </div>
+</section>
+
+</main>
+<nav>
+  <button data-tab="work" class="on"><span>🎬</span>Субтитры</button>
+  <button data-tab="dict"><span>📖</span>Словарь</button>
+  <button data-tab="set"><span>⚙️</span>Настройки</button>
+  <button data-tab="help"><span>❓</span>Помощь</button>
+</nav>
+
+<!-- ===== ЛОГИКА (без интерфейса; проверяется отдельно) ===== -->
+<script id="core">
+var Core = (function () {
+  "use strict";
+  var DEFAULT_DICT = [
+    ["кэжуал", "casual"], ["кежуал", "casual"], ["кэжл", "casual"],
+    ["ягода стор", "Yagoda Store"],
+    ["оверсайс", "оверсайз"], ["лонг слив", "лонгслив"], ["лонгслиф", "лонгслив"],
+    ["свит шот", "свитшот"], ["тауп", "тауп"]
+  ];
+
+  function norm(w) {
+    return String(w).toLowerCase().replace(/ё/g, "е").replace(/[^a-zа-яәғқңөұүһі0-9-]/gi, "");
+  }
+
+  // "1.230s" | 1.23 | {seconds, nanos} -> число секунд
+  function sec(v) {
+    if (v == null) return null;
+    if (typeof v === "number") return v;
+    if (typeof v === "object") return (+v.seconds || 0) + (+v.nanos || 0) / 1e9;
+    var m = String(v).match(/-?[\d.]+/);
+    return m ? parseFloat(m[0]) : null;
+  }
+
+  // Достаём слова с таймингом из любого ответа Gemini (annotations type=word_info)
+  function wordsFromInteraction(resp) {
+    var out = [];
+    (function walk(o) {
+      if (!o || typeof o !== "object") return;
+      if (Array.isArray(o)) { o.forEach(walk); return; }
+      if ((o.type === "word_info" || o.word_info) && (o.start_offset != null || (o.word_info && o.word_info.start_offset != null))) {
+        var w = o.word_info || o;
+        var s = sec(w.start_offset), e = sec(w.end_offset);
+        if (w.text && s != null) out.push({ w: String(w.text).trim(), s: s, e: e == null ? s + 0.3 : e });
+        return;
+      }
+      for (var k in o) walk(o[k]);
+    })(resp);
+    out.sort(function (a, b) { return a.s - b.s; });
+    return out.filter(function (x) { return x.w; });
+  }
+
+  // Делим поток слов на блоки по паузам — единица для правки и перевода
+  function blocks(words, opt) {
+    opt = opt || {};
+    var gap = opt.gap || 0.5, maxW = opt.maxWords || 40, res = [], cur = [];
+    words.forEach(function (w, i) {
+      var prev = words[i - 1];
+      if (cur.length && ((w.s - prev.e) > gap || cur.length >= maxW || (cur.length >= 8 && /[.!?]$/.test(prev.w)))) {
+        res.push(cur); cur = [];
+      }
+      cur.push(w);
+    });
+    if (cur.length) res.push(cur);
+    return res;
+  }
+
+  // Сопоставление исправленного текста с исходными словами (LCS по нормализованным словам)
+  function align(text, src) {
+    var fw = String(text).split(/\s+/).filter(Boolean);
+    var a = fw.map(norm), b = src.map(function (x) { return norm(x.w); });
+    var n = a.length, m = b.length, L = [];
+    for (var i = 0; i <= n; i++) { L.push(new Int16Array(m + 1)); }
+    for (i = n - 1; i >= 0; i--) for (var j = m - 1; j >= 0; j--)
+      L[i][j] = a[i] && a[i] === b[j] ? L[i + 1][j + 1] + 1 : Math.max(L[i + 1][j], L[i][j + 1]);
+    var pairs = []; i = 0; j = 0;
+    while (i < n && j < m) {
+      if (a[i] && a[i] === b[j]) { pairs.push([i, j]); i++; j++; }
+      else if (L[i + 1][j] >= L[i][j + 1]) i++; else j++;
+    }
+    var t = new Array(n).fill(null);
+    pairs.forEach(function (p) { t[p[0]] = [src[p[1]].s, src[p[1]].e]; });
+    // промежутки между якорями — делим время пропорционально длине слов
+    var s0 = src.length ? src[0].s : 0, eN = src.length ? src[src.length - 1].e : 0;
+    var k = 0;
+    while (k < n) {
+      if (t[k]) { k++; continue; }
+      var st = k; while (k < n && !t[k]) k++;
+      var from = st > 0 ? t[st - 1][1] : s0, to = k < n ? t[k][0] : eN;
+      if (to < from) to = from;
+      var tot = 0; for (var q = st; q < k; q++) tot += fw[q].length + 1;
+      var acc = from;
+      for (q = st; q < k; q++) {
+        var d = (to - from) * (fw[q].length + 1) / (tot || 1);
+        t[q] = [acc, acc + d]; acc += d;
+      }
+    }
+    return fw.map(function (w, x) { return { w: w, s: t[x][0], e: t[x][1] }; });
+  }
+
+  // Словарь: замена целых слов/фраз без учёта регистра
+  function applyDict(text, dict) {
+    var out = String(text);
+    (dict || []).slice().sort(function (x, y) { return y[0].length - x[0].length; }).forEach(function (p) {
+      if (!p[0] || !p[1] || norm(p[0]) === norm(p[1]) && p[0].toLowerCase() === p[1].toLowerCase()) return;
+      var esc = p[0].trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&").replace(/\s+/g, "\\s+");
+      var re = new RegExp("(^|[^a-zа-яёәғқңөұүһі0-9])(" + esc + ")(?=$|[^a-zа-яёәғқңөұүһі0-9])", "gi");
+      out = out.replace(re, function (_, pre) { return pre + p[1]; });
+    });
+    return out;
+  }
+
+  var SHORT = /^(и|а|но|в|во|на|с|со|к|ко|по|о|об|от|до|из|за|у|не|ни|же|ли|как|что|это|то|для|при|под|над|или|да|мен|және|да|де|бен|пен|мен)$/i;
+
+  // Режем слова с таймингом на строки субтитров
+  function chunk(words, maxCh) {
+    maxCh = maxCh || 30;
+    var res = [], cur = [];
+    var len = function (arr) { return arr.map(function (x) { return x.w; }).join(" ").length; };
+    words.forEach(function (w) {
+      if (cur.length && len(cur.concat([w])) > maxCh) {
+        // если в строке есть запятая — режем после неё, хвост переносим
+        var cut = -1;
+        for (var i = cur.length - 1; i > 0; i--) if (/[,;:—–-]$/.test(cur[i - 1].w) && len(cur.slice(0, i)) >= maxCh * 0.45) { cut = i; break; }
+        if (cut > 0) { res.push(cur.slice(0, cut)); cur = cur.slice(cut); }
+        else {
+          // предлог или союз в конце строки переносим на следующую («вот так | её», а не «вот | так её»)
+          var tail = 0;
+          while (tail < 2 && cur.length - tail > 1 && SHORT.test(cur[cur.length - 1 - tail].w)) tail++;
+          res.push(cur.slice(0, cur.length - tail)); cur = cur.slice(cur.length - tail);
+        }
+      }
+      cur.push(w);
+      if (/[.!?]$/.test(w.w) && len(cur) >= maxCh * 0.4) { res.push(cur); cur = []; }
+    });
+    if (cur.length) res.push(cur);
+    // не оставляем одно короткое слово в конце, если можно подтянуть к предыдущей строке
+    for (var k = res.length - 1; k > 0; k--) {
+      if (res[k].length === 1 && res[k][0].w.length <= 4 && len(res[k - 1].concat(res[k])) <= maxCh + 4 && res[k][0].s - res[k - 1][res[k - 1].length - 1].e < 0.4) {
+        res[k - 1] = res[k - 1].concat(res[k]); res.splice(k, 1);
+      }
+    }
+    return res.map(function (c) { return { s: c[0].s, e: c[c.length - 1].e, text: c.map(function (x) { return x.w; }).join(" ") }; });
+  }
+
+  // Текст без таймингов слов (перевод) — делим по длине и раскладываем время пропорционально
+  function chunkPlain(text, s, e, maxCh) {
+    var ws = String(text).split(/\s+/).filter(Boolean), tot = String(text).length || 1, acc = s;
+    var pseudo = ws.map(function (w) { var d = (e - s) * (w.length + 1) / tot; var o = { w: w, s: acc, e: acc + d }; acc += d; return o; });
+    return chunk(pseudo, maxCh);
+  }
+
+  function style(text, opt) {
+    var t = String(text);
+    if (opt.noPunct) t = t.replace(/[.,!?;:«»"“”…]+/g, "").replace(/\s+[—–-]\s+/g, " ").replace(/\s{2,}/g, " ").trim();
+    if (opt.upper) t = t.toUpperCase();
+    return t;
+  }
+
+  function lrcTime(x) {
+    x = Math.max(0, x);
+    var m = Math.floor(x / 60), s = x - m * 60;
+    return "[" + String(m).padStart(2, "0") + ":" + s.toFixed(2).padStart(5, "0") + "]";
+  }
+
+  // LRC: время начала строки; пустая строка — убрать текст в паузе
+  function toLRC(lines, opt) {
+    opt = opt || {};
+    var gap = opt.gap == null ? 0.4 : opt.gap, out = [];
+    lines.forEach(function (l, i) {
+      var t = style(l.text, opt);
+      if (!t) return;
+      out.push(lrcTime(l.s) + t);
+      var nx = lines[i + 1];
+      if (!nx || nx.s - l.e > gap) out.push(lrcTime(l.e + 0.05));
+    });
+    return out.join("\n") + "\n";
+  }
+
+  // Слова, которые человек заменил 1-в-1 — кандидаты в словарь
+  function learned(before, after) {
+    var a = String(before).split(/\s+/).filter(Boolean), b = String(after).split(/\s+/).filter(Boolean), res = [];
+    if (a.length !== b.length) return res;
+    for (var i = 0; i < a.length; i++) {
+      var x = a[i].replace(/[.,!?;:«»"]+/g, ""), y = b[i].replace(/[.,!?;:«»"]+/g, "");
+      if (norm(x) && norm(x) !== norm(y)) res.push([x.toLowerCase(), y]);
+    }
+    return res;
+  }
+
+  function parseJSON(text) {
+    var t = String(text).trim().replace(/^```(?:json)?/i, "").replace(/```$/, "").trim();
+    try { return JSON.parse(t); } catch (e) {}
+    var a = t.indexOf("{"), b = t.lastIndexOf("}");
+    return JSON.parse(t.slice(a, b + 1));
+  }
+
+  function prompt(blks, dict) {
+    var d = dict.map(function (p) { return "«" + p[0] + "» → «" + p[1] + "»"; }).join("; ");
+    return [
+      "Ты редактор субтитров для Instagram-обзоров женской одежды бутика Yagoda Store (Караганда, Казахстан). Говорит владелица бутика, живая русская речь.",
+      "Ниже распознанный текст, разбитый на блоки. Для КАЖДОГО блока верни:",
+      "ru — тот же текст, исправленный: ошибки распознавания по смыслу, падежи и окончания, правильная пунктуация, буква ё. Повторы-запинки (одно слово два раза подряд) и звуки «э-э», «м-м» убери. НЕ пересказывай, НЕ сокращай, НЕ меняй порядок слов и смысл — это субтитры к речи.",
+      "Размеры одежды пиши цифрами: «сорок четвёртый» → «44-й», «от сорок второго до сорок восьмого» → «от 42-го до 48-го»; буквенные размеры латиницей (S, M, L, XL). Цены цифрами с «₸». Другие числа — цифрами, если это количество, проценты или размеры.",
+      "Словарь (как распознаётся → как писать, применяй обязательно): " + (d || "пусто") + ".",
+      "kz — естественный перевод исправленного ru на казахский язык (кириллица, буквы ә ғ қ ң ө ұ ү һ і), живой разговорный стиль для рекламы. Бренды, названия и числа не переводи.",
+      "Ответ строго JSON: {\"blocks\":[{\"i\":0,\"ru\":\"...\",\"kz\":\"...\"}]} — столько же блоков, тот же порядок, без пояснений.",
+      "",
+      blks.map(function (b, i) { return i + ": " + b.map(function (w) { return w.w; }).join(" "); }).join("\n")
+    ].join("\n");
+  }
+
+  // Сборка итоговых строк из блоков и ответа ИИ
+  function build(blks, fixed, dict, maxCh) {
+    var ru = [], kz = [], orig = [];
+    blks.forEach(function (b, i) {
+      var f = (fixed && fixed[i]) || {};
+      var raw = b.map(function (w) { return w.w; }).join(" ");
+      var r = applyDict(f.ru || raw, dict);
+      var al = align(r, b);
+      chunk(al, maxCh).forEach(function (c) { ru.push(c); });
+      var kzt = f.kz ? applyDict(f.kz, dict) : "";
+      if (kzt) chunkPlain(kzt, b[0].s, b[b.length - 1].e, maxCh + 6).forEach(function (c) { kz.push(c); });
+    });
+    ru.forEach(function (l) { l.orig = l.text; });
+    kz.forEach(function (l) { l.orig = l.text; });
+    return { ru: ru, kz: kz };
+  }
+
+  return { norm: norm, sec: sec, wordsFromInteraction: wordsFromInteraction, blocks: blocks, align: align, applyDict: applyDict,
+    chunk: chunk, chunkPlain: chunkPlain, style: style, toLRC: toLRC, lrcTime: lrcTime, learned: learned, parseJSON: parseJSON,
+    prompt: prompt, build: build, DEFAULT_DICT: DEFAULT_DICT };
+})();
+</script>
+
+<!-- ===== ИНТЕРФЕЙС ===== -->
+<script>
+{
+  const $ = (s) => document.querySelector(s), $$ = (s) => [...document.querySelectorAll(s)];
+  const API = "https://generativelanguage.googleapis.com";
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem("yagoda_subs_" + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem("yagoda_subs_" + k, JSON.stringify(v)); } catch (e) {} }
+  };
+  let dict = store.get("dict", Core.DEFAULT_DICT.slice());
+  let opt = Object.assign({ upper: true, noPunct: true, max: 30, gap: 0.4, asr: "gemini-3.5-transcribe", llm: "" }, store.get("opt", {}));
+  let key = store.get("key", "");
+  let file = null, audioURL = null, result = null, viewLang = "ru", outMode = "ru";
+
+  // ---------- вкладки ----------
+  function tab(name) {
+    $$("nav button").forEach((b) => b.classList.toggle("on", b.dataset.tab === name));
+    ["work", "dict", "set", "help"].forEach((t) => $("#tab-" + t).classList.toggle("hidden", t !== name));
+    window.scrollTo(0, 0);
+  }
+  $$("nav button").forEach((b) => b.addEventListener("click", () => tab(b.dataset.tab)));
+  $$("[data-go]").forEach((b) => b.addEventListener("click", () => tab(b.dataset.go)));
+  const refreshKey = () => $("#needKey").classList.toggle("hidden", !!key);
+
+  // ---------- настройки ----------
+  $("#key").value = key;
+  $("#optUpper").checked = opt.upper; $("#optNoPunct").checked = opt.noPunct; $("#optMax").value = opt.max; $("#optGap").value = opt.gap;
+  $("#mAsr").value = opt.asr; $("#mLlm").value = opt.llm;
+  const saveOpt = () => {
+    opt.upper = $("#optUpper").checked; opt.noPunct = $("#optNoPunct").checked;
+    opt.max = Math.min(60, Math.max(15, +$("#optMax").value || 30)); opt.gap = Math.min(3, Math.max(0.2, +$("#optGap").value || 0.4));
+    opt.asr = $("#mAsr").value.trim() || "gemini-3.5-transcribe"; opt.llm = $("#mLlm").value.trim();
+    store.set("opt", opt); renderLines();
+  };
+  ["#optUpper", "#optNoPunct", "#optMax", "#optGap", "#mAsr", "#mLlm"].forEach((s) => $(s).addEventListener("change", saveOpt));
+  $("#keySave").addEventListener("click", () => { key = $("#key").value.trim(); store.set("key", key); refreshKey(); $("#keyRes").textContent = key ? "Сохранено." : "Ключ удалён."; });
+  $("#keyTest").addEventListener("click", async () => {
+    key = $("#key").value.trim(); store.set("key", key); refreshKey();
+    $("#keyRes").textContent = "Проверяю…";
+    try { const m = await pickModel(true); $("#keyRes").innerHTML = "✅ Ключ работает. Модель для правки: <b>" + m + "</b>"; }
+    catch (e) { $("#keyRes").innerHTML = '<div class="err">' + esc(e.message) + "</div>"; }
+  });
+
+  // ---------- словарь ----------
+  function renderDict() {
+    $("#dictRows").innerHTML = dict.map((p, i) =>
+      `<div class="dict"><input data-i="${i}" data-k="0" value="${esc(p[0])}" placeholder="как слышится"><input data-i="${i}" data-k="1" value="${esc(p[1])}" placeholder="как писать"><button class="sec" data-del="${i}" aria-label="Удалить">✕</button></div>`).join("");
+    $("#dictText").value = dict.map((p) => p[0] + " = " + p[1]).join("\n");
+  }
+  $("#dictRows").addEventListener("input", (e) => { const t = e.target; if (t.dataset.i == null) return; dict[+t.dataset.i][+t.dataset.k] = t.value; store.set("dict", dict); });
+  $("#dictRows").addEventListener("click", (e) => { const d = e.target.dataset.del; if (d == null) return; dict.splice(+d, 1); store.set("dict", dict); renderDict(); });
+  $("#dictAdd").addEventListener("click", () => { dict.unshift(["", ""]); renderDict(); $("#dictRows input").focus(); });
+  $("#dictCopy").addEventListener("click", async () => { try { await navigator.clipboard.writeText($("#dictText").value); $("#dictCopy").textContent = "Скопировано"; } catch (e) { $("#dictText").select(); } });
+  $("#dictLoad").addEventListener("click", () => {
+    const rows = $("#dictText").value.split("\n").map((l) => l.split("=").map((x) => x.trim())).filter((p) => p.length === 2 && p[0] && p[1]);
+    if (rows.length) { dict = rows; store.set("dict", dict); renderDict(); }
+  });
+
+  // ---------- файл ----------
+  $("#file").addEventListener("change", (e) => {
+    file = e.target.files[0]; if (!file) return;
+    $("#fileInfo").textContent = file.name + " · " + (file.size / 1048576).toFixed(1) + " МБ";
+    $("#go").classList.remove("hidden"); hideErr();
+    if (file.size > 400 * 1048576) showErr("Файл большой (" + Math.round(file.size / 1048576) + " МБ) — телефон может не справиться. Лучше звук из «Быстрой команды» или экспорт ролика в 480p.");
+    if (audioURL) URL.revokeObjectURL(audioURL);
+    audioURL = URL.createObjectURL(file); $("#player").src = audioURL;
+  });
+  $("#go").addEventListener("click", run);
+  $("#restart").addEventListener("click", () => { result = null; file = null; $("#file").value = ""; $("#fileInfo").textContent = ""; $("#go").classList.add("hidden");
+    $("#step2").classList.add("hidden"); $("#step3").classList.add("hidden"); $("#status").textContent = ""; window.scrollTo(0, 0); });
+
+  const progress = (p, t) => { $("#prog").classList.remove("hidden"); $("#prog i").style.width = p + "%"; $("#status").textContent = t; };
+  const showErr = (m) => { $("#err").textContent = m; $("#err").classList.remove("hidden"); };
+  const hideErr = () => $("#err").classList.add("hidden");
+  function esc(s) { return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+
+  // Звук → WAV 16 кГц моно (работает и для видео, и для аудио)
+  async function toWav(f) {
+    const buf = await f.arrayBuffer();
+    const AC = window.AudioContext || window.webkitAudioContext;
+    const ac = new AC();
+    const dec = await new Promise((ok, bad) => { const p = ac.decodeAudioData(buf, ok, bad); if (p && p.then) p.then(ok, bad); });
+    ac.close && ac.close();
+    const sr = 16000, len = Math.ceil(dec.duration * sr);
+    const off = new (window.OfflineAudioContext || window.webkitOfflineAudioContext)(1, len, sr);
+    const src = off.createBufferSource(); src.buffer = dec; src.connect(off.destination); src.start();
+    const r = await off.startRendering();
+    const pcm = r.getChannelData(0), out = new DataView(new ArrayBuffer(44 + pcm.length * 2));
+    const w = (o, s) => [...s].forEach((c, i) => out.setUint8(o + i, c.charCodeAt(0)));
+    w(0, "RIFF"); out.setUint32(4, 36 + pcm.length * 2, true); w(8, "WAVEfmt "); out.setUint32(16, 16, true); out.setUint16(20, 1, true);
+    out.setUint16(22, 1, true); out.setUint32(24, sr, true); out.setUint32(28, sr * 2, true); out.setUint16(32, 2, true); out.setUint16(34, 16, true);
+    w(36, "data"); out.setUint32(40, pcm.length * 2, true);
+    for (let i = 0; i < pcm.length; i++) out.setInt16(44 + i * 2, Math.max(-1, Math.min(1, pcm[i])) * 32767, true);
+    return { blob: new Blob([out], { type: "audio/wav" }), duration: dec.duration };
+  }
+  const b64 = (blob) => new Promise((ok, bad) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(",")[1]); r.onerror = bad; r.readAsDataURL(blob); });
+
+  async function api(path, body, extra) {
+    const res = await fetch(API + path, Object.assign({ method: body ? "POST" : "GET", headers: Object.assign({ "x-goog-api-key": key }, body ? { "Content-Type": "application/json" } : {}) }, body ? { body: JSON.stringify(body) } : {}, extra || {}));
+    const txt = await res.text();
+    if (!res.ok) { let m = txt; try { m = JSON.parse(txt).error.message; } catch (e) {} throw new Error("Gemini " + res.status + ": " + m); }
+    return txt ? JSON.parse(txt) : {};
+  }
+
+  async function pickModel(force) {
+    if (opt.llm && !force) return opt.llm;
+    const r = await api("/v1beta/models?pageSize=200");
+    const names = (r.models || []).filter((m) => (m.supportedGenerationMethods || []).includes("generateContent"))
+      .map((m) => m.name.replace("models/", ""))
+      .filter((n) => /^gemini-[\d.]+-flash$|^gemini-[\d.]+-flash-latest$|^gemini-flash-latest$/.test(n));
+    const ver = (n) => parseFloat((n.match(/gemini-([\d.]+)/) || [0, 0])[1]);
+    names.sort((a, b) => ver(b) - ver(a));
+    const m = opt.llm || names[0] || "gemini-flash-latest";
+    return m;
+  }
+
+  // Загрузка в Files API (если не прошла отправка внутри запроса)
+  async function uploadFile(blob) {
+    const start = await fetch(API + "/upload/v1beta/files", { method: "POST", headers: { "x-goog-api-key": key, "X-Goog-Upload-Protocol": "resumable", "X-Goog-Upload-Command": "start",
+      "X-Goog-Upload-Header-Content-Length": blob.size, "X-Goog-Upload-Header-Content-Type": blob.type, "Content-Type": "application/json" }, body: JSON.stringify({ file: { display_name: "yagoda-audio" } }) });
+    const url = start.headers.get("x-goog-upload-url");
+    if (!url) throw new Error("Не удалось начать загрузку файла (" + start.status + ")");
+    const up = await fetch(url, { method: "POST", headers: { "X-Goog-Upload-Offset": "0", "X-Goog-Upload-Command": "upload, finalize" }, body: blob });
+    const j = await up.json(); if (!j.file) throw new Error("Загрузка файла не удалась: " + JSON.stringify(j).slice(0, 300));
+    for (let i = 0; i < 30 && j.file.state === "PROCESSING"; i++) { await new Promise((r) => setTimeout(r, 2000)); Object.assign(j, await api("/v1beta/" + j.file.name)); j.file = j.file || j; }
+    return j.file.uri;
+  }
+
+  async function transcribe(wav) {
+    const cfg = { transcription_config: { language_codes: ["ru-RU"], mode: { type: "verbatim", timestamp_granularities: ["word"] } } };
+    const data = await b64(wav);
+    let r, firstErr;
+    try { r = await api("/v1beta/interactions", { model: opt.asr, input: [{ type: "audio", data: data, mime_type: "audio/wav" }], generation_config: cfg }); }
+    catch (e) { firstErr = e; }
+    if (!r) {
+      progress(35, "Загружаю звук в Gemini…");
+      const uri = await uploadFile(wav);
+      try { r = await api("/v1beta/interactions", { model: opt.asr, input: [{ type: "audio", uri: uri, mime_type: "audio/wav" }], generation_config: cfg }); }
+      catch (e) { throw new Error("Распознавание не удалось.\n1) " + firstErr.message + "\n2) " + e.message); }
+    }
+    const words = Core.wordsFromInteraction(r);
+    if (!words.length) throw new Error("Gemini вернул текст без времени слов. Ответ: " + JSON.stringify(r).slice(0, 500));
+    return words;
+  }
+
+  async function fix(blks) {
+    const model = await pickModel();
+    const r = await api("/v1beta/models/" + model + ":generateContent", {
+      contents: [{ role: "user", parts: [{ text: Core.prompt(blks, dict.filter((p) => p[0] && p[1])) }] }],
+      generationConfig: { temperature: 0.2, responseMimeType: "application/json" }
+    });
+    const text = ((r.candidates || [])[0] || {}).content?.parts?.map((p) => p.text || "").join("") || "";
+    const j = Core.parseJSON(text);
+    const arr = []; (j.blocks || []).forEach((b) => { arr[+b.i] = b; });
+    return arr;
+  }
+
+  async function run() {
+    if (!key) { tab("set"); return; }
+    if (!file) return;
+    hideErr(); $("#go").disabled = true;
+    try {
+      progress(10, "Отделяю звук…");
+      const { blob } = await toWav(file);
+      progress(25, "Распознаю речь (до минуты)…");
+      const words = await transcribe(blob);
+      progress(70, "Исправляю текст и перевожу на казахский…");
+      const blks = Core.blocks(words);
+      let fixed = [];
+      try { fixed = await fix(blks); }
+      catch (e) { showErr("Правка и перевод не удались, показываю текст как распознан.\n" + e.message); }
+      result = Core.build(blks, fixed, dict.filter((p) => p[0] && p[1]), opt.max);
+      progress(100, "Готово. Проверьте текст.");
+      viewLang = "ru"; $$("#langTabs button").forEach((b) => b.classList.toggle("on", b.dataset.l === "ru"));
+      $("#step2").classList.remove("hidden"); $("#step3").classList.remove("hidden");
+      renderLines(); $("#step2").scrollIntoView({ behavior: "smooth" });
+    } catch (e) {
+      showErr(e.message || String(e)); $("#status").textContent = "";
+    } finally { $("#go").disabled = false; }
+  }
+
+  // ---------- проверка ----------
+  const fmt = (s) => { const m = Math.floor(s / 60); return m + ":" + (s - m * 60).toFixed(1).padStart(4, "0"); };
+  function renderLines() {
+    if (!result) return;
+    const ls = result[viewLang];
+    document.documentElement.style.setProperty("--tt", opt.upper ? "uppercase" : "none");
+    $("#lines").innerHTML = ls.length ? ls.map((l, i) =>
+      `<div class="ln${l.text !== l.orig ? " ch" : ""}" data-i="${i}"><button class="t" data-seek="${i}">${fmt(l.s)}</button><textarea rows="1" data-i="${i}">${esc(l.text)}</textarea></div>`).join("")
+      : '<p class="mute">Перевода нет — попробуйте ещё раз или проверьте ключ.</p>';
+    updateLearn();
+  }
+  $$("#langTabs button").forEach((b) => b.addEventListener("click", () => { viewLang = b.dataset.l; $$("#langTabs button").forEach((x) => x.classList.toggle("on", x === b)); renderLines(); }));
+  $("#lines").addEventListener("input", (e) => { const i = e.target.dataset.i; if (i == null) return; const l = result[viewLang][+i]; l.text = e.target.value; e.target.parentNode.classList.toggle("ch", l.text !== l.orig); });
+  $("#lines").addEventListener("change", updateLearn);
+  $("#lines").addEventListener("click", (e) => { const i = e.target.dataset.seek; if (i == null) return; const p = $("#player"); p.currentTime = Math.max(0, result[viewLang][+i].s - 0.2); p.play().catch(() => {}); });
+  $("#player").addEventListener("timeupdate", () => {
+    if (!result) return; const t = $("#player").currentTime, ls = result[viewLang];
+    $$(".ln").forEach((el) => { const l = ls[+el.dataset.i]; el.classList.toggle("cur", t >= l.s && t < l.e + 0.2); });
+  });
+
+  function updateLearn() {
+    if (!result) return;
+    const seen = new Set(dict.map((p) => Core.norm(p[0])));
+    const c = [];
+    result.ru.forEach((l) => Core.learned(l.orig, l.text).forEach((p) => { if (!seen.has(Core.norm(p[0]))) { seen.add(Core.norm(p[0])); c.push(p); } }));
+    $("#learn").classList.toggle("hidden", !c.length);
+    $("#learnList").innerHTML = c.map((p, i) => `<label class="chip"><input type="checkbox" checked data-a="${esc(p[0])}" data-b="${esc(p[1])}"> ${esc(p[0])} → <b>${esc(p[1])}</b></label>`).join("");
+  }
+
+  $$("#outMode button").forEach((b) => b.addEventListener("click", () => { outMode = b.dataset.m; $$("#outMode button").forEach((x) => x.classList.toggle("on", x === b)); }));
+
+  $("#save").addEventListener("click", async () => {
+    if (!result) return;
+    $$("#learnList input:checked").forEach((c) => dict.push([c.dataset.a, c.dataset.b]));
+    if ($$("#learnList input:checked").length) { store.set("dict", dict); renderDict(); }
+    const base = (file && file.name ? file.name.replace(/\.[^.]+$/, "") : "yagoda").slice(0, 40);
+    const files = [];
+    const o = { upper: opt.upper, noPunct: opt.noPunct, gap: opt.gap };
+    if (outMode !== "ru") files.push(new File([Core.toLRC(result.kz, o)], base + "_KZ.lrc", { type: "text/plain" }));
+    if (outMode !== "kz") files.push(new File([Core.toLRC(result.ru, o)], base + "_RU.lrc", { type: "text/plain" }));
+    try {
+      if (navigator.canShare && navigator.canShare({ files })) { await navigator.share({ files }); return; }
+    } catch (e) { if (e.name === "AbortError") return; }
+    files.forEach((f, i) => setTimeout(() => { const a = document.createElement("a"); a.href = URL.createObjectURL(f); a.download = f.name; document.body.appendChild(a); a.click(); a.remove(); }, i * 600));
+  });
+
+  renderDict(); refreshKey();
+}
+</script>
+</body>
+</html>
