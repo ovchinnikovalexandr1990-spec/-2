@@ -76,7 +76,7 @@ ol.help{padding-left:22px;margin:6px 0}ol.help li{margin:6px 0}
 </style>
 </head>
 <body>
-<header><h1>Ягода · Субтитры</h1><p>Звук ролика → проверка текста → файл для CapCut</p></header>
+<header><h1>Ягода · Субтитры <small style="font-size:12px;opacity:.6">v3</small></h1><p>Звук ролика → проверка текста → файл для CapCut</p></header>
 <main>
 
 <!-- ===== ВКЛАДКА: СУБТИТРЫ ===== -->
@@ -449,7 +449,7 @@ var Core = (function () {
     set(k, v) { try { localStorage.setItem("yagoda_subs_" + k, JSON.stringify(v)); } catch (e) {} }
   };
   let dict = store.get("dict", Core.DEFAULT_DICT.slice());
-  let opt = Object.assign({ upper: true, noPunct: true, max: 30, gap: 0.4, asr: "gemini-3.5-transcribe", llm: "" }, store.get("opt", {}));
+  let opt = Object.assign({ upper: true, noPunct: true, max: 30, gap: 0.4, asr: "gemini-3.5-transcribe", llm: "gemini-4-hydrogen" }, store.get("opt", {}));
   let key = store.get("key", "");
   let file = null, audioURL = null, result = null, viewLang = "ru", outMode = "ru";
 
@@ -470,7 +470,7 @@ var Core = (function () {
   const saveOpt = () => {
     opt.upper = $("#optUpper").checked; opt.noPunct = $("#optNoPunct").checked;
     opt.max = Math.min(60, Math.max(15, +$("#optMax").value || 30)); opt.gap = Math.min(3, Math.max(0.2, +$("#optGap").value || 0.4));
-    opt.asr = $("#mAsr").value.trim() || "gemini-3.5-transcribe"; opt.llm = $("#mLlm").value.trim();
+    opt.asr = $("#mAsr").value.trim() || "gemini-3.5-transcribe"; opt.llm = $("#mLlm").value.trim() || "gemini-4-hydrogen";
     store.set("opt", opt); renderLines();
   };
   ["#optUpper", "#optNoPunct", "#optMax", "#optGap", "#mAsr", "#mLlm"].forEach((s) => $(s).addEventListener("change", saveOpt));
@@ -590,12 +590,22 @@ var Core = (function () {
   }
 
   async function fix(blks) {
-    const model = await pickModel();
-    const r = await api("/v1beta/models/" + model + ":generateContent", {
+    const body = (lvl) => ({
       contents: [{ role: "user", parts: [{ text: Core.prompt(blks, dict.filter((p) => p[0] && p[1])) }] }],
-      generationConfig: { temperature: 0.2, responseMimeType: "application/json" }
-    }, null, 90000);
-    const text = ((r.candidates || [])[0] || {}).content?.parts?.map((p) => p.text || "").join("") || "";
+      generationConfig: Object.assign({ temperature: 0.2, responseMimeType: "application/json" }, lvl ? { thinkingConfig: { thinkingLevel: lvl } } : {})
+    });
+    let model = opt.llm || "gemini-4-hydrogen", r, lastErr;
+    // быстро: думание «low»; если модель не принимает — без параметра; если модели нет — подбираем другую
+    for (const lvl of ["low", null]) {
+      try { r = await api("/v1beta/models/" + model + ":generateContent", body(lvl), null, 90000); break; }
+      catch (e) {
+        lastErr = e;
+        if (/404|not found|not supported/i.test(e.message) && !opt.llmTried) { opt.llmTried = 1; model = await pickModel(true); }
+        else if (/вовремя/.test(e.message)) throw e;
+      }
+    }
+    if (!r) throw lastErr;
+    const text = ((r.candidates || [])[0] || {}).content?.parts?.filter((p) => !p.thought).map((p) => p.text || "").join("") || "";
     const j = Core.parseJSON(text);
     const arr = []; (j.blocks || []).forEach((b) => { arr[+b.i] = b; });
     return arr;
