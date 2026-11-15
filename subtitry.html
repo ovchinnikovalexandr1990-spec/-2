@@ -536,16 +536,21 @@ var Core = (function () {
   }
   const b64 = (blob) => new Promise((ok, bad) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(",")[1]); r.onerror = bad; r.readAsDataURL(blob); });
 
-  async function api(path, body, extra) {
-    const res = await fetch(API + path, Object.assign({ method: body ? "POST" : "GET", headers: Object.assign({ "x-goog-api-key": key }, body ? { "Content-Type": "application/json" } : {}) }, body ? { body: JSON.stringify(body) } : {}, extra || {}));
-    const txt = await res.text();
+  async function api(path, body, extra, ms) {
+    const ac = new AbortController(); const tm = setTimeout(() => ac.abort(), ms || 120000);
+    let res, txt;
+    try {
+      res = await fetch(API + path, Object.assign({ method: body ? "POST" : "GET", signal: ac.signal, headers: Object.assign({ "x-goog-api-key": key }, body ? { "Content-Type": "application/json" } : {}) }, body ? { body: JSON.stringify(body) } : {}, extra || {}));
+      txt = await res.text();
+    } catch (e) { throw new Error(e.name === "AbortError" ? "Gemini не ответил вовремя (" + Math.round((ms || 120000) / 1000) + " с)" : e.message); }
+    finally { clearTimeout(tm); }
     if (!res.ok) { let m = txt; try { m = JSON.parse(txt).error.message; } catch (e) {} throw new Error("Gemini " + res.status + ": " + m); }
     return txt ? JSON.parse(txt) : {};
   }
 
   async function pickModel(force) {
     if (opt.llm && !force) return opt.llm;
-    const r = await api("/v1beta/models?pageSize=200");
+    const r = await api("/v1beta/models?pageSize=200", null, null, 20000);
     const names = (r.models || []).filter((m) => (m.supportedGenerationMethods || []).includes("generateContent"))
       .map((m) => m.name.replace("models/", ""))
       .filter((n) => /^gemini-[\d.]+-flash$|^gemini-[\d.]+-flash-latest$|^gemini-flash-latest$/.test(n));
@@ -589,12 +594,14 @@ var Core = (function () {
     const r = await api("/v1beta/models/" + model + ":generateContent", {
       contents: [{ role: "user", parts: [{ text: Core.prompt(blks, dict.filter((p) => p[0] && p[1])) }] }],
       generationConfig: { temperature: 0.2, responseMimeType: "application/json" }
-    });
+    }, null, 90000);
     const text = ((r.candidates || [])[0] || {}).content?.parts?.map((p) => p.text || "").join("") || "";
     const j = Core.parseJSON(text);
     const arr = []; (j.blocks || []).forEach((b) => { arr[+b.i] = b; });
     return arr;
   }
+
+  const withTimeout = (pr, ms, msg) => Promise.race([pr, new Promise((_, no) => setTimeout(() => no(new Error(msg)), ms))]);
 
   async function run() {
     if (!key) { tab("set"); return; }
@@ -602,10 +609,10 @@ var Core = (function () {
     hideErr(); $("#go").disabled = true;
     try {
       progress(10, "Отделяю звук…");
-      const { blob } = await toWav(file);
+      const { blob } = await withTimeout(toWav(file), 90000, "Не удалось отделить звук из видео. Используйте M4A из «Быстрой команды».");
       progress(25, "Распознаю речь (до минуты)…");
       const words = await transcribe(blob);
-      progress(70, "Исправляю текст и перевожу на казахский…");
+      progress(70, "Исправляю текст и перевожу на казахский… (до 1,5 минут)");
       const blks = Core.blocks(words);
       let fixed = [];
       try { fixed = await fix(blks); }
